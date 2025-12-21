@@ -1,6 +1,6 @@
 /*
 
- CageMaker PRCG - The Parametric Rack Cage Generator v. 0.20 (2 Dec 2025)
+ CageMaker PRCG - The Parametric Rack Cage Generator v. 0.20 (21 Dec 2025)
  --------------------------------------------------------------------------------
  Copyright © 2025-2026 by WebMaka - this file is licensed under CC BY-NC-SA 4.0.
  To view a copy of this license, visit
@@ -1755,3 +1755,4 @@ if (split_cage_into_two_halves)
 
 
 /* END! */
+
