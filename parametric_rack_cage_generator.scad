@@ -1,6 +1,6 @@
 /*
 
- CageMaker PRCG - The Parametric Rack Cage Generator v. 0.20 (21 Dec 2025)
+ CageMaker PRCG - The Parametric Rack Cage Generator v. 0.21 (23 Dec 2025)
  --------------------------------------------------------------------------------
  Copyright © 2025-2026 by WebMaka - this file is licensed under CC BY-NC-SA 4.0.
  To view a copy of this license, visit
@@ -15,7 +15,7 @@
  For the latest version of this file, report bugs, etc., please visit my
  Github repo:
  
-   https://github.com/WebMaka/ParametricRackCageGenerator
+   https://github.com/WebMaka/CageMakerPRCG
 
 
  If this is useful to you, please consider donating or subscribing to my
@@ -39,7 +39,7 @@
    - Added support for half-height cages as well as half-width for 10" racks.
      (Requested by Github user "FlyingT".)
  
- 0.20 - 2 Dec 2025
+ 0.20 - 21 Dec 2025
    - Added the ability to split any cage in half, for printing within a smaller 
      print volume, e.g., 10" 2U rack cage on a 220mm^2 print bed (e.g., Ender3).
      This requires additional compute time, however, as the script will create
@@ -69,6 +69,13 @@
      device height limit on otherwise-default settings is 28mm/unit.
    - Consolidated some options to make the script easier to use.
    - Fixed a number of bugs and consolidated the script's code.
+   
+ 0.21 - 23 Dec 2025
+ 
+   - Added a vertical offset setting, which adds the ability to shift the cage 
+     off vertical center.
+   - Cleaned up code in a number of places (hat tip: Reddit user "oldesole1")
+   - Fixed a number of new bugs.
 
 */
 
@@ -114,10 +121,13 @@ show_build_outline = 220;
 
 
 // Tapping or heat-set insert holes - sets hole diameters on split cages or bolt-together faceplate ears for tapping, or expands hole diameters to allow the use of heat-set threaded inserts instead of raw bolts. - NOTE: This setting should match the recommended hole diameter of the bolt or insert to be used, or use the next smaller diameter. - ALSO NOTE: This setting is only used for bolt-together cages (split in half or with bolt-together ears).
-tap_or_heat_set_holes = 5.25; // [3.15:"M3 Clearance (3.15mm hole)", 4.20:"M4 Clearance (4.2mm hole)", 5.25:"M5 Clearance (5.25mm hole) - DEFAULT", 6.30:"M6 Clearance (6.3mm hole)", 2.95:"4-40 Clearance (.1160\" hole)", 3.66:"6-32 Clearance (.144\" hole)",4.31:"8-32 Clearance (.1695\" hole)", 4.98:"10-24/10-32 Clearance (.1960\" hole)", 6.53:"1/4-20 Clearance (.257\" hole)", 2.60:"M3 Tapped (2.6mm hole)", 3.50:"M4 Tapped (3.5mm hole)", 4.40:"M5 Tapped (4.4mm hole)", 5.00:"M6 Tapped (5.0mm hole)", 2.07:"4-40 Tapped (0.0813\" hole)", 2.53:"6-32 Tapped (.0997\" hole)", 3.19:"8-32 Tapped (.1257\" hole)", 3.53:"10-24/10-32 Tapped (.1389\" hole)", 4.79:"1/4-20 Tapped (.1887\" hole)",  3.98:"M3 Heat-Set (4mm hole)", 4.10:"M3 Heat-Set (4.1mm hole)", 4.80:"M3 Heat-Set (4.8mm hole)", 5.60:"M4 Heat-Set (5.6mm hole)", 5.70:"M4 Heat-Set (5.7mm hole)", 6.40:"M5 Heat-Set (6.4mm hole)", 6.50:"M5 Heat-Set (6.5mm hole)", 8.00:"M6 Heat-Set (8mm hole)", 8.10:"M6 Heat-Set (8.1mm hole)", 3.98:"4-40 Heat-Set (0.157\" hole)", 4.03:"4-40 Heat-Set (0.159\" hole)", 4.76:"6-32 Heat-Set (0.1875\" hole)",  4.85:"6-32 Heat-Set (0.191\" hole)", 5.61:"8-32 Heat-Set (0.221\" hole)", 5.74:"8-32 Heat-Set (0.226\" hole)", 6.41:"10-24/10-32 Heat-Set (0.252\" hole)", 6.51:"10-24/10-32 Heat-Set (0.256\" hole)", 8.01:"1/4-20 Heat-Set (0.315\" hole)", 8.11:"1/4-20 Heat-Set (0.319\" hole)"]
+tap_or_heat_set_holes = 5.25; // [3.15:"M3 Clearance (3.15mm hole)", 4.20:"M4 Clearance (4.2mm hole)", 5.25:"M5 Clearance (5.25mm hole) - DEFAULT", 6.30:"M6 Clearance (6.3mm hole)", 2.95:"4-40 Clearance (.1160\" hole)", 3.66:"6-32 Clearance (.144\" hole)",4.31:"8-32 Clearance (.1695\" hole)", 4.98:"10-24/10-32 Clearance (.1960\" hole)", 6.53:"1/4-20 Clearance (.257\" hole)", 2.60:"M3 Tapped (2.6mm hole)", 3.50:"M4 Tapped (3.5mm hole)", 4.40:"M5 Tapped (4.4mm hole)", 5.00:"M6 Tapped (5.0mm hole)", 2.07:"4-40 Tapped (0.0813\" hole)", 2.53:"6-32 Tapped (.0997\" hole)", 3.19:"8-32 Tapped (.1257\" hole)", 3.53:"10-24/10-32 Tapped (.1389\" hole)", 4.79:"1/4-20 Tapped (.1887\" hole)",  3.98:"M3 Heat-Set (4mm hole)", 4.10:"M3 Heat-Set (4.1mm hole)", 4.80:"M3 Heat-Set (4.8mm hole)", 5.60:"M4 Heat-Set (5.6mm hole)", 5.70:"M4 Heat-Set (5.7mm hole)", 6.40:"M5 Heat-Set (6.4mm hole)", 6.50:"M5 Heat-Set (6.5mm hole)", 8.00:"M6 Heat-Set (8mm hole)", 8.10:"M6 Heat-Set (8.1mm hole)", 3.99:"4-40 Heat-Set (0.157\" hole)", 4.03:"4-40 Heat-Set (0.159\" hole)", 4.76:"6-32 Heat-Set (0.1875\" hole)",  4.85:"6-32 Heat-Set (0.191\" hole)", 5.61:"8-32 Heat-Set (0.221\" hole)", 5.74:"8-32 Heat-Set (0.226\" hole)", 6.41:"10-24/10-32 Heat-Set (0.252\" hole)", 6.51:"10-24/10-32 Heat-Set (0.256\" hole)", 8.01:"1/4-20 Heat-Set (0.315\" hole)", 8.11:"1/4-20 Heat-Set (0.319\" hole)"]
 
-// Offset distance (in mm) - shift the entire cage to one side from horizontal center. Positive and negative values are allowed. - WARNING: this script will enforce safe boundaries so as to not push a cage into mounting space or off the edge of the faceplate.
-cage_offset = 0.00; // [-240.00::240.0]
+// Horizontal offset distance (in mm) - shift the entire cage to one side from horizontal center. Positive and negative values are allowed. - WARNING: this script will enforce safe boundaries so as to not push a cage into mounting space or off the edge of the faceplate.
+cage_horizontal_offset = 0.00; // [-240.00::240.0]
+
+// Vertical offset distance (in mm) - shift the entire cage up or down from vertical center. Positive and negative values are allowed. - WARNING: this script will enforce safe boundaries so as to not push a cage off the edge of the faceplate.
+cage_vertical_offset = 0.00; // [-150.00::150.0]
 
 // Heavy device - thicken all surfaces to support additional weight.
 heavy_device = 0; // [0:"Standard 4mm Thickness - DEFAULT",1:"Thickened 5mm Thickness",2:"Super-Thick 6mm Thickness"]
@@ -138,25 +148,25 @@ add_alignment_pin_holes = false;
 /* [Additional Faceplate Modifications] */
 
 // Mod Slot ONE Type - add a new connector, port, or opening of some form onto the faceplate. - NOTE: Be aware of fitment, as the device cage takes priority over any modifications selected here and if there isn't sufficient room for the modification CageMaker will remove it.
-mod_one_type = "None"; // ["None":"None", "1Keystone":"Single Keystone Module", "2Keystone":"2 Keystone Modules Side-By-Side","3Keystone":"3 Keystone Modules Side-By-Side","30mmFan":"30mm Fan", "40mmFan":"40mm Fan","60mmFan":"60mm Fan","80mmFan":"80mm Fan"]
+mod_one_type = "None"; // ["None":"None", "1x1Keystone":"Single Keystone Module", "2x1Keystone":"2 Keystone Modules Side-By-Side","3x1Keystone":"3 Keystone Modules Side-By-Side","1x2Keystone":"2 Keystone Modules Stacked Vertically","2x2Keystone":"4 Keystone Modules In 2x2 Formation","3x2Keystone":"6 Keystone Modules In 3x2 Formation","30mmFan":"30mm Fan", "40mmFan":"40mm Fan","60mmFan":"60mm Fan","80mmFan":"80mm Fan"]
 
 // Mod Slot ONE offset distance (in mm) - shift the modification above to one side from horizontal center. Positive and negative values are allowed. - NOTE: Set this to zero and CageMaker will attempt to automatically position the modification if it'll fit. - WARNING: CageMaker will enforce safe boundaries so as to not push a modification into mounting space, the actual cage itself, or off the edge of the faceplate.
 mod_one_offset = 0.00; // [-240.00::240.0]
 
 // Mod Slot TWO Type - add a new connector, port, or opening of some form onto the faceplate. - NOTE: Be aware of fitment, as the device cage takes priority over any modifications selected here and if there isn't sufficient room for the modification CageMaker will remove it.
-mod_two_type = "None"; // ["None":"None", "1Keystone":"Single Keystone Module", "2Keystone":"2 Keystone Modules Side-By-Side","3Keystone":"3 Keystone Modules Side-By-Side","30mmFan":"30mm Fan", "40mmFan":"40mm Fan","60mmFan":"60mm Fan","80mmFan":"80mm Fan"]
+mod_two_type = "None"; // ["None":"None", "1x1Keystone":"Single Keystone Module", "2x1Keystone":"2 Keystone Modules Side-By-Side","3x1Keystone":"3 Keystone Modules Side-By-Side","1x2Keystone":"2 Keystone Modules Stacked Vertically","2x2Keystone":"4 Keystone Modules In 2x2 Formation","3x2Keystone":"6 Keystone Modules In 3x2 Formation","30mmFan":"30mm Fan", "40mmFan":"40mm Fan","60mmFan":"60mm Fan","80mmFan":"80mm Fan"]
 
-// Mod Slot TWO offset distance (in mm) - shift the modification above to one side from horizontal center. Positive and negative values are allowed. - NOTE: This MUST be manually set if the first mod slot above is in use, otherwise it will overlap with the first mod. - WARNING: CageMaker will enforce safe boundaries so as to not push a modification into mounting space, the actual cage itself, or off the edge of the faceplate.
+// Mod Slot TWO offset distance (in mm) - shift the modification above to one side from horizontal center. Positive and negative values are allowed. - NOTE: Set this to zero and CageMaker will attempt to automatically position the modification if it'll fit. - WARNING: CageMaker will enforce safe boundaries so as to not push a modification into mounting space, the actual cage itself, or off the edge of the faceplate.
 mod_two_offset = 0.00; // [-240.00::240.0]
 
 
 /* [Rarely-Changed Options] */
 
 // Rounded faceplate corners
-faceplate_radius = 5; // [1:"No - sharp corners",5:"Rounded corners - DEFAULT"]
+faceplate_radius = 5; // [0.1:"No - sharp corners",5:"Rounded corners - DEFAULT"]
 
 // Rounded side/top/bottom cutout corners
-cutout_radius = 5; // [1:"No - sharp corners",5:"Rounded corners - DEFAULT",10:"More rounded corners",15:"Even more rounded corners",20:"Really rounded corners"]
+cutout_radius = 5; // [0.1:"No - sharp corners",5:"Rounded corners - DEFAULT",10:"More rounded corners",15:"Even more rounded corners",20:"Really rounded corners"]
 
 // Detail level of all curved/rounded surfaces, and a higher value is better but can be MUCH slower - NOTE: default is 64, and anything over 100 is not advised. This should not normally need to be changed.
 this_fn = 64; // [0::360]
@@ -181,7 +191,7 @@ module block_customizer()
 
 // Time for some global variables that don't need to be configurable options...
 //
-// By the way, this script has a lot of kludges in it like the line above.
+// By the way, this script has a lot of kludges in it when it comes to variables.
 // They exist for a simple reason: OpenSCAD effectively treats almost all
 // non-special user-defined variables as constants, so once they're declared
 // into existence and assigned a value they usually cannot be reassigned
@@ -255,18 +265,10 @@ module two_rounded_corner_plate(plate_height, plate_width, plate_thickness, corn
 // (e.g., faceplate)
 module four_rounded_corner_plate(plate_height, plate_width, plate_thickness, corner_radius)
 {
-    linear_extrude(plate_thickness, center=false, twist=0, $fn=this_fn)
-        hull()
-        {
-            translate([0-(plate_width / 2)+corner_radius, 0-(plate_height / 2)+corner_radius, 0])
-                circle(r=corner_radius, $fn=this_fn);
-            translate([0-(plate_width / 2)+corner_radius, (plate_height / 2)-corner_radius, 0])
-                circle(r=corner_radius, $fn=this_fn);
-            translate([(plate_width / 2)-corner_radius, 0-(plate_height / 2)+corner_radius, 0])
-                circle(r=corner_radius, $fn=this_fn);
-            translate([(plate_width / 2)-corner_radius, (plate_height / 2)-corner_radius, 0])
-                circle(r=corner_radius, $fn=this_fn);
-        }
+    linear_extrude(plate_thickness)
+        offset(r=corner_radius, $fn=this_fn)
+            offset(delta=-corner_radius)
+                square([plate_width, plate_height], center=true);
 }
 
 // Create faceplate slotted screw hole (sized for M5 or 10-32 screws)
@@ -366,95 +368,43 @@ module create_blank_faceplate(desired_width, unit_height, safe_bolt_together_fac
         for (unit_number = [0:unit_height])
         {
             if (safe_bolt_together_faceplate_ears != "Both Sides")
-            {
-                faceplate_screw_hole_slot(0-((desired_width * 25.4) / 2) + 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 6.35, -1);
-                faceplate_screw_hole_slot(0-((desired_width * 25.4) / 2) + 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 22.225, -1);
-                faceplate_screw_hole_slot(0-((desired_width * 25.4) / 2) + 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 38.1, -1);
-            }
+                for (y = [6.35, 22.225, 38.1])
+                    faceplate_screw_hole_slot(0-((desired_width * 25.4) / 2) + 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + y, -1);
             else
-            {
-                translate([0-((desired_width * 25.4) / 2) - 11, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 6.35, 14 + heavy_device])
-                    rotate([0, 90, 0])
-                        linear_extrude(22, center=false, twist=0, $fn=this_fn)
-                            // Heat-set threaded inserts will have larger hole diameters to clear the insert, so scale the holes accordingly as required.
-                            if (tap_or_heat_set_holes == 0.00)
-                            {
-                                circle(d=5.5, $fn=this_fn, false);
-                            } else {
-                                circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
-                            }
-                translate([0-((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 22.225, 14 + heavy_device])
-                    rotate([0, 90, 0])
-                        linear_extrude(22, center=false, twist=0, $fn=this_fn)
-                            if (tap_or_heat_set_holes == 0.00)
-                            {
-                                circle(d=5.5, $fn=this_fn, false);
-                            } else {
-                                circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
-                            }
-                translate([0-((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 38.1, 14 + heavy_device])
-                    rotate([0, 90, 0])
-                        linear_extrude(22, center=false, twist=0, $fn=this_fn)
-                            if (tap_or_heat_set_holes == 0.00)
-                            {
-                                circle(d=5.5, $fn=this_fn, false);
-                            } else {
-                                circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
-                            }
-                            
-                // Optionally, add alignment pin holes if the option is enabled.
-                if (add_alignment_pin_holes)
-                {                   
-                    alignment_pin_hole(0-((desired_width * 25.4) / 2) + 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 6.35, 2 + (heavy_device / 2));
-                    alignment_pin_hole(0-((desired_width * 25.4) / 2) + 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 22.225, 2 + (heavy_device / 2));
-                    alignment_pin_hole(0-((desired_width * 25.4) / 2) + 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 38.1, 2 + (heavy_device / 2));
-                }                            
-            }
+                for (y = [6.35, 22.225, 38.1])
+                {
+                    translate([0-((desired_width * 25.4) / 2) - 11, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + y, 14 + heavy_device])
+                        rotate([0, 90, 0])
+                            linear_extrude(22, center=false, twist=0, $fn=this_fn)
+                                // Heat-set threaded inserts will have larger hole diameters to clear the insert, so scale the holes accordingly as required.
+                                if (tap_or_heat_set_holes == 0.00)
+                                    circle(d=5.5, $fn=this_fn, false);
+                                else
+                                    circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
+
+                    // Optionally, add alignment pin holes if the option is enabled.
+                    if (add_alignment_pin_holes)
+                        alignment_pin_hole(0-((desired_width * 25.4) / 2) + 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + y, 2 + (heavy_device / 2));
+                }
 
             if (safe_bolt_together_faceplate_ears == "None")
-            {
-                faceplate_screw_hole_slot(((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 6.35, -1);
-                faceplate_screw_hole_slot(((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 22.225, -1);
-                faceplate_screw_hole_slot(((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 38.1, -1);
-            }
+                for (y = [6.35, 22.225, 38.1])
+                    faceplate_screw_hole_slot(((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + y, -1);
             else
-            {
-                translate([((desired_width * 25.4) / 2) - 11, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 6.35, 14 + heavy_device])
-                    rotate([0, 90, 0])
-                        linear_extrude(22, center=false, twist=0, $fn=this_fn)
-                            if (tap_or_heat_set_holes == 0.00)
-                            {
-                                circle(d=5.5, $fn=this_fn, false);
-                            } else {
-                                circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
-                            }
-                translate([((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 22.225, 14 + heavy_device])
-                    rotate([0, 90, 0])
-                        linear_extrude(22, center=false, twist=0, $fn=this_fn)
-                            if (tap_or_heat_set_holes == 0.00)
-                            {
-                                circle(d=5.5, $fn=this_fn, false);
-                            } else {
-                                circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
-                            }
-                translate([((desired_width * 25.4) / 2) - 8, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 38.1, 14 + heavy_device])
-                    rotate([0, 90, 0])
-                        linear_extrude(22, center=false, twist=0, $fn=this_fn)
-                            if (tap_or_heat_set_holes == 0.00)
-                            {
-                                circle(d=5.5, $fn=this_fn, false);
-                            } else {
-                                circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
-                            }
-                
-                            // Optionally, add alignment pin holes if the option is enabled.
-                if (add_alignment_pin_holes)
+                for (y = [6.35, 22.225, 38.1])
                 {
-                    alignment_pin_hole(((desired_width * 25.4) / 2) - 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 6.35, 2 + (heavy_device / 2));
-                    alignment_pin_hole(((desired_width * 25.4) / 2) - 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 22.225, 2 + (heavy_device / 2));
-                    alignment_pin_hole(((desired_width * 25.4) / 2) - 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + 38.1, 2 + (heavy_device / 2));
-                }                            
-            }            
+                    translate([((desired_width * 25.4) / 2) - 11, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + y, 14 + heavy_device])
+                        rotate([0, 90, 0])
+                            linear_extrude(22, center=false, twist=0, $fn=this_fn)
+                                if (tap_or_heat_set_holes == 0.00)
+                                    circle(d=5.5, $fn=this_fn, false);
+                                else
+                                    circle(d=tap_or_heat_set_holes, $fn=this_fn, false);
+
+                // Optionally, add alignment pin holes if the option is enabled.
+                if (add_alignment_pin_holes)
+                    alignment_pin_hole(((desired_width * 25.4) / 2) - 2.5, (unit_number * 44.45) - ((unit_height * 44.45) / 2) + y, 2 + (heavy_device / 2));
+                }
         }
     }
 }
@@ -465,13 +415,11 @@ module fan_grill_cutout(size)
     difference()
     {
         for (i = [17:10:size - 3])
-        {
             difference()
             {
                 cylinder(h=10, d=i, center=true, $fn=this_fn);
                 cylinder(h=10.2, d=i-7, center=true, $fn=this_fn);
             }
-        }
         rotate([0, 0, 0])
             cube([2.5, size, 10.2], center=true);
         rotate([0, 0, 60])
@@ -618,7 +566,7 @@ module make_half_cage()
     // Calculate whether the device will fit within the INTERNAL width for the
     // given rack width, again allowing at least 10mm of clearance on each side
     // for support structure. Note that for 1/2-width and 1/3-width sizes in 19"
-    // racks, we will auto-scale 1/3-to-1/2, 1.2-to-full, or even 1/3-to-full
+    // racks, we will auto-scale 1/3-to-1/2, 1/2-to-full, or even 1/3-to-full
     // as required to fit the device dimensions.
     //
     // NOTE: This seems kludgy AF but has to be done this way, with a series of
@@ -642,70 +590,77 @@ module make_half_cage()
       
     total_depth_required = device_depth + 22;
     
-    // Calculate hole diameters for screw clearances based on the heat-set hole
-    // setting. We'll use close-clearance hole diameters for the corresponding
-    // heat-set hole setting, so as to automatically add screw clearance holes
+    // Determine hole diameters for screw clearances based on the tap/heat-set
+    // hole setting. We'll use close-clearance hole diameters for the corresponding
+    // tap/heat-set hole setting, so as to automatically add screw clearance holes
     // to match the selected tap diameter or heat-set.
     //
-    // NOTE: This seems kludgy AF but has to be done this way, with a series of
-    // conditional additions, because of how OpenSCAD handles variables.
-    screw_clearance_hole = 0.00 + 
-       (tap_or_heat_set_holes == 3.15 ? 3.15 : 0.00) + // [3.15:"M3 Clearance (3.15mm hole)", 
-       (tap_or_heat_set_holes == 4.20 ? 5.25 : 0.00) + // 4.20:"M4 Clearance (4.2mm hole)", 
-       (tap_or_heat_set_holes == 5.25 ? 5.25 : 0.00) + // 5.25:"M5 Clearance (5.25mm hole) - DEFAULT", 
-       (tap_or_heat_set_holes == 6.30 ? 6.30 : 0.00) + // 6.30:"M6 Clearance (6.3mm hole)", 
-       (tap_or_heat_set_holes == 2.95 ? 2.95 : 0.00) + // 2.95:"4-40 Clearance (.1160\" hole)", 
-       (tap_or_heat_set_holes == 3.66 ? 3.66 : 0.00) + // 3.66:"6-32 Clearance (.144\" hole)",  
-       (tap_or_heat_set_holes == 4.31 ? 4.31 : 0.00) + // 4.31:"8-32 Clearance (.1695\" hole)", 
-       (tap_or_heat_set_holes == 4.98 ? 4.98 : 0.00) + // 4.98:"10-24/10-32 Clearance (.1960\" hole)", 
-       (tap_or_heat_set_holes == 6.53 ? 6.53 : 0.00) + // 6.53:"1/4-20 Clearance (.257\" hole)" 
-      (tap_or_heat_set_holes == 0.00 ? 5.25 : 0.00) + // (5.5mm - M5/10-24)
-      (tap_or_heat_set_holes == 2.60 ? 3.15 : 0.00) + // 2.6:"M3 Tapped (2.6mm hole)",    
-      (tap_or_heat_set_holes == 3.50 ? 4.20 : 0.00) + // 3.5:"M4 Tapped (3.5mm hole)",    
-      (tap_or_heat_set_holes == 4.40 ? 5.25 : 0.00) + // 4.4:"M5 Tapped (4.4mm hole)",    
-      (tap_or_heat_set_holes == 5.00 ? 6.30 : 0.00) + // 5.00:"M6 Tapped (5.0mm hole)",   
-      (tap_or_heat_set_holes == 2.07 ? 2.95 : 0.00) + // 2.07:"4-40 Tapped (0.0813\" hole)",    
-      (tap_or_heat_set_holes == 2.53 ? 3.66 : 0.00) + // 2.53:"6-32 Tapped (.0997\" hole)",   
-      (tap_or_heat_set_holes == 3.19 ? 4.31 : 0.00) + // 3.19:"8-32 Tapped (.1257\" hole)",    
-      (tap_or_heat_set_holes == 3.53 ? 4.98 : 0.00) + // 3.53:"10-24/10-32 Tapped (.1389\" hole)",    
-      (tap_or_heat_set_holes == 4.79 ? 6.53 : 0.00) + // 4.79:"1/4-20 Tapped (.1887\" hole)",    
-      (tap_or_heat_set_holes == 3.98 ? 3.15 : 0.00) + // 3.98:"M3 Heat-Set (4mm hole)",
-      (tap_or_heat_set_holes == 4.10 ? 3.15 : 0.00) + // 4.1:"M3 Heat-Set (4.1mm hole)",
-      (tap_or_heat_set_holes == 4.80 ? 3.15 : 0.00) + // 4.8:"M3 Heat-Set (4.8mm hole)",
-      (tap_or_heat_set_holes == 5.60 ? 4.20 : 0.00) + // 5.6:"M4 Heat-Set (5.6mm hole)",
-      (tap_or_heat_set_holes == 5.70 ? 4.20 : 0.00) + // 5.7:"M4 Heat-Set (5.7mm hole)",
-      (tap_or_heat_set_holes == 6.40 ? 5.25 : 0.00) + // 6.4:"M5 Heat-Set (6.4mm hole)",
-      (tap_or_heat_set_holes == 6.50 ? 5.25 : 0.00) + // 5.7:"M5 Heat-Set (6.5mm hole)",
-      (tap_or_heat_set_holes == 8.00 ? 6.30 : 0.00) + // 8.0:"M6 Heat-Set (8mm hole)",
-      (tap_or_heat_set_holes == 8.10 ? 6.30 : 0.00) + // 8.1:"M6 Heat-Set (8.1mm hole)",
-      (tap_or_heat_set_holes == 3.98 ? 2.95 : 0.00) + // 3.98:"4-40 Heat-Set (0.157\" hole)",
-      (tap_or_heat_set_holes == 4.03 ? 2.95 : 0.00) + // 4.03:"4-40 Heat-Set (0.159\" hole)",
-      (tap_or_heat_set_holes == 4.76 ? 3.66 : 0.00) + // 4.76:"6-32 Heat-Set (0.1875\" hole)",
-      (tap_or_heat_set_holes == 4.85 ? 3.66 : 0.00) + // 4.85:"6-32 Heat-Set (0.191\" hole)",
-      (tap_or_heat_set_holes == 5.61 ? 4.31 : 0.00) + // 5.6:"8-32 Heat-Set (0.221\" hole)",
-      (tap_or_heat_set_holes == 5.74 ? 4.31 : 0.00) + // 5.74:"8-32 Heat-Set (0.226\" hole)",
-      (tap_or_heat_set_holes == 6.41 ? 4.98 : 0.00) + // 6.4:"10-24 Heat-Set (0.252\" hole)",
-      (tap_or_heat_set_holes == 6.51 ? 4.98 : 0.00) + // 6.5:"10-24 Heat-Set (0.256\" hole)",
-      (tap_or_heat_set_holes == 8.01 ? 6.53 : 0.00) + // 8.0:"1/4-20 Heat-Set (0.315\" hole)"
-      (tap_or_heat_set_holes == 8.11 ? 6.53 : 0.00) + // 8.1:"1/4-20 Heat-Set (0.319\" hole)"
-      (tap_or_heat_set_holes == 0.00 ? 5.25 : 0.00);
+    // NOTE: Here's a different kludge to work around immutable variables: a
+    // lookup table we search for values.
+    hole_options = [
+      [3.15, 3.15], // [3.15:"M3 Clearance (3.15mm hole)", 
+      [4.20, 4.20], // 4.20:"M4 Clearance (4.2mm hole)", 
+      [5.25, 5.25], // 5.25:"M5 Clearance (5.25mm hole) - DEFAULT", 
+      [6.30, 6.30], // 6.30:"M6 Clearance (6.3mm hole)", 
+      [2.95, 2.95], // 2.95:"4-40 Clearance (.1160\" hole)", 
+      [3.66, 3.66], // 3.66:"6-32 Clearance (.144\" hole)",  
+      [4.31, 4.31], // 4.31:"8-32 Clearance (.1695\" hole)", 
+      [4.98, 4.98], // 4.98:"10-24/10-32 Clearance (.1960\" hole)", 
+      [6.53, 6.53], // 6.53:"1/4-20 Clearance (.257\" hole)" 
+      
+      [2.60, 3.15], // 2.6:"M3 Tapped (2.6mm hole)",    
+      [3.50, 4.20], // 3.5:"M4 Tapped (3.5mm hole)",    
+      [4.40, 5.25], // 4.4:"M5 Tapped (4.4mm hole)",    
+      [5.00, 6.30], // 5.00:"M6 Tapped (5.0mm hole)",   
+      [2.07, 2.95], // 2.07:"4-40 Tapped (0.0813\" hole)",    
+      [2.53, 3.66], // 2.53:"6-32 Tapped (.0997\" hole)",   
+      [3.19, 4.31], // 3.19:"8-32 Tapped (.1257\" hole)",    
+      [3.53, 4.98], // 3.53:"10-24/10-32 Tapped (.1389\" hole)",    
+      [4.79, 6.53], // 4.79:"1/4-20 Tapped (.1887\" hole)",    
+      
+      [3.98, 3.15], // 3.98:"M3 Heat-Set (4mm hole)",
+      [4.10, 3.15], // 4.1:"M3 Heat-Set (4.1mm hole)",
+      [4.80, 3.15], // 4.8:"M3 Heat-Set (4.8mm hole)",
+      [5.60, 4.20], // 5.6:"M4 Heat-Set (5.6mm hole)",
+      [5.70, 4.20], // 5.7:"M4 Heat-Set (5.7mm hole)",
+      [6.40, 5.25], // 6.4:"M5 Heat-Set (6.4mm hole)",
+      [6.50, 5.25], // 5.7:"M5 Heat-Set (6.5mm hole)",
+      [8.00, 6.30], // 8.0:"M6 Heat-Set (8mm hole)",
+      [8.10, 6.30], // 8.1:"M6 Heat-Set (8.1mm hole)",
+      [3.99, 2.95], // 3.99:"4-40 Heat-Set (0.157\" hole)",
+      [4.03, 2.95], // 4.03:"4-40 Heat-Set (0.159\" hole)",
+      [4.76, 3.66], // 4.76:"6-32 Heat-Set (0.1875\" hole)",
+      [4.85, 3.66], // 4.85:"6-32 Heat-Set (0.191\" hole)",
+      [5.61, 4.31], // 5.6:"8-32 Heat-Set (0.221\" hole)",
+      [5.74, 4.31], // 5.74:"8-32 Heat-Set (0.226\" hole)",
+      [6.41, 4.98], // 6.4:"10-24 Heat-Set (0.252\" hole)",
+      [6.51, 4.98], // 6.5:"10-24 Heat-Set (0.256\" hole)",
+      [8.01, 6.53], // 8.0:"1/4-20 Heat-Set (0.315\" hole)"
+      [8.11, 6.53], // 8.1:"1/4-20 Heat-Set (0.319\" hole)"
+      
+      [0.00, 5.25], // Default fallback - 5.25mm for M5/#10
+    ];
+    screw_clearance_hole = hole_options[search(tap_or_heat_set_holes, hole_options)[0]][1];
 
 
     // Change the faceplate ear(s) setting to accurately reflect the new size
     // if the device dimensions were too wide to fit the selected rack width.
-    safe_bolt_together_faceplate_ears = 
-      str((rack_cage_width_required == 5 ? "One Side":""),
-      (rack_cage_width_required == 6 ? "None":""),
-      (rack_cage_width_required == 6.33 ? "One Side":""),
-      (rack_cage_width_required == 6.33001 ? "Both Sides":""),
-      (rack_cage_width_required == 7 ? "None":""),
-      (rack_cage_width_required == 9.5 ? "One Side":""),
-      (rack_cage_width_required == 10 ? "None":""),
-      (rack_cage_width_required == 19 ? "None":""));
+    faceplate_ear_options = [
+        [5, "One Side"],
+        [6, "None"],
+        [6.33, "One Side"],
+        [6.33001, "Both Sides"],
+        [7, "None"],
+        [9.5, "One Side"],
+        [10, "None"],
+        [19, "None"],
+    ];
+    safe_bolt_together_faceplate_ears = faceplate_ear_options[search(rack_cage_width_required, faceplate_ear_options)[0]][1];
 
 
-    // Cage offset, for shifting the cage to one side. We need to sanity check this
-    // to avoid the user pushing the cage off the side of the faceplate.  
+    // Cage horizontal offset, for shifting the cage to one side. We need
+    // to sanity check this to avoid the user pushing the cage off the side
+    // of the faceplate.  
     
     // How wide is our working space? We have to reserve 15.875mm (5/8") for each rack
     // side, and 12mm for bolt-together ears for half- and third-width cages.
@@ -717,16 +672,31 @@ module make_half_cage()
     // Is the offset small enough to keep the cage inside the safe working area of the 
     // faceplate?
     // When the offset sanity check fails, force the offset to zero.
-    outer_edge = total_width_required / 2;
-    safe_cage_offset = 0.00 + 
+    outer_horizontal_edge = total_width_required / 2;
+    safe_cage_horizontal_offset = 0.00 + 
       ((
-        ((cage_offset > 0) && (outer_edge + cage_offset > working_width_a))
+        ((cage_horizontal_offset > 0) && (outer_horizontal_edge + cage_horizontal_offset > working_width_a))
         ||
-        ((cage_offset < 0) && (0 - outer_edge + cage_offset < working_width_b))
-      ) ? 0.00:cage_offset);
+        ((cage_horizontal_offset < 0) && (0 - outer_horizontal_edge + cage_horizontal_offset < working_width_b))
+      ) ? 0.00:cage_horizontal_offset);
     
 
-    // First, we'll create an entire half cage in its entirety.
+    // Cage vertical offset, for shifting the cage up or down. We need to
+    // sanity check this to avoid the user pushing the cage off the edge of
+    // the faceplate.  
+    outer_vertical_edge = (units_required * 44.45) / 2;
+    
+    // When the offset sanity check fails, force the offset to zero.
+    safe_cage_vertical_offset = 0.00 + 
+      ((
+        ((cage_vertical_offset >= 0) && ((total_height_required / 2) + cage_vertical_offset > outer_vertical_edge))
+        ||
+        ((cage_vertical_offset < 0) && (0 - (total_height_required / 2) + cage_vertical_offset < 0 - outer_vertical_edge))
+      ) ? 0.00:cage_vertical_offset);
+
+
+
+    // First, we'll create a half cage.
     translate([(rack_cage_width * 25.4) / 4 -10, (units_required * 44.45) / 2 + 5, 0])
         union()
         {
@@ -736,47 +706,47 @@ module make_half_cage()
                 do_the_thing();       
                 
                 // Then cut the cage in half...
-                translate([safe_cage_offset + (rack_cage_width * 25.4) / 2 - 0.001, 0, total_depth_required / 2 - 1])
+                translate([safe_cage_horizontal_offset + (rack_cage_width * 25.4) / 2 - 0.001, 0, total_depth_required / 2 - 1])
                     cube([rack_cage_width * 25.4 + 0.01, (units_required + 1) * 44.45, total_depth_required], center=true);
                 
                 // Then cut grooves for the tabs that attach the halves to each other...
-                translate([safe_cage_offset, -((device_height / 2) + 8 + heavy_device + (heavy_device / 2)) + (4 + heavy_device), device_depth + 4 + heavy_device,])
+                translate([safe_cage_horizontal_offset, -((device_height / 2) + 8 + heavy_device + (heavy_device / 2)) + (4 + heavy_device) + safe_cage_vertical_offset, device_depth + 4 + heavy_device,])
                     rotate([90, 0, 0])
                         four_rounded_corner_plate(12, 40, 4 + heavy_device, 5);
                         
-                translate([0, (device_height / 2) + 8.05 + heavy_device + (heavy_device / 2), 10 + heavy_device])
+                translate([0, (device_height / 2) + 8.05 + heavy_device + (heavy_device / 2) + safe_cage_vertical_offset, 10 + heavy_device])
                     rotate([90, 0, 0])
                         four_rounded_corner_plate(12, 40, 4.1 + heavy_device, 5);
                 
                 // Then, punch holes for tapping or heat-set inserts...
-                translate([safe_cage_offset-10, -((device_height / 2) + heavy_device + (heavy_device / 2)), device_depth + 4 + heavy_device])
+                translate([safe_cage_horizontal_offset-10, -((device_height / 2) + heavy_device + (heavy_device / 2)) + safe_cage_vertical_offset, device_depth + 4 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=tap_or_heat_set_holes, h=16, $fn=this_fn, center=true);
 
-                translate([safe_cage_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) - 2, 10 + heavy_device])
+                translate([safe_cage_horizontal_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) - 2 + safe_cage_vertical_offset, 10 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=tap_or_heat_set_holes, h=16, $fn=this_fn, center=true);
 
-                translate([cage_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) + 14 - heavy_device, 10 + heavy_device])
+                translate([cage_horizontal_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) + 14 - heavy_device + safe_cage_vertical_offset, 10 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=screw_clearance_hole * 2, h=16, $fn=this_fn, center=true);
                             
                 // Optionally, add alignment pin holes if the option is enabled.
                 if (add_alignment_pin_holes)
                 {
-                        alignment_pin_hole(safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), 2 + (heavy_device / 2));
-                        alignment_pin_hole(safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), 15);
-                        alignment_pin_hole(safe_cage_offset-2.5, ((units_required * 44.45) / 2) - 2.5, 2 + (heavy_device / 2));
-                    
-                        alignment_pin_hole(safe_cage_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)), 2 + (heavy_device / 2));
-                        alignment_pin_hole(safe_cage_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)), 15);
-                        alignment_pin_hole(safe_cage_offset-2.5, -(((units_required * 44.45) / 2) - 2.5), 2 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, 2 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, 15);
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, ((units_required * 44.45) / 2) - 2.5, 2 + (heavy_device / 2));
+                
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, 2 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, 15);
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, -(((units_required * 44.45) / 2) - 2.5), 2 + (heavy_device / 2));
 
-                        alignment_pin_hole(safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), device_depth - 1 + (heavy_device / 2));
-                        alignment_pin_hole(safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), device_depth + 9 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, device_depth - 1 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, device_depth + 9 + (heavy_device / 2));
 
-                        alignment_pin_hole(safe_cage_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)), device_depth - 1 + (heavy_device / 2));
-                        alignment_pin_hole(safe_cage_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)), device_depth + 9 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, device_depth - 1 + (heavy_device / 2));
+                    alignment_pin_hole(safe_cage_horizontal_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, device_depth + 9 + (heavy_device / 2));
 
                     // If the "extra support" option is enabled, add some more
                     // alignment pins based on the height of the device.
@@ -784,15 +754,15 @@ module make_half_cage()
                     {
                         if (device_depth > 50)
                         {
-                                alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), (device_depth / 2) + 2 + (heavy_device / 2));                      
-                                alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), (device_depth / 2) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, (device_depth / 2) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, (device_depth / 2) + 2 + (heavy_device / 2));                      
                         }
                         if (device_depth > 100)
                         {
-                                alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), (device_depth / 4) + 2 + (heavy_device / 2));
-                                alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), (device_depth / 4) + 2 + (heavy_device / 2));
-                                alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), (device_depth * 0.75) + 2 + (heavy_device / 2)); 
-                                alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), (device_depth * 0.75) + 2 + (heavy_device / 2));
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, (device_depth / 4) + 2 + (heavy_device / 2));
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, (device_depth / 4) + 2 + (heavy_device / 2));
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) + safe_cage_vertical_offset, (device_depth * 0.75) + 2 + (heavy_device / 2)); 
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) + safe_cage_vertical_offset, (device_depth * 0.75) + 2 + (heavy_device / 2));
                         }
                     }
                 }
@@ -801,23 +771,23 @@ module make_half_cage()
             // Then add tabs for attaching the halves to each other.
             difference()
             {
-                translate([safe_cage_offset, (device_height / 2) + 8.25 + heavy_device + (heavy_device / 2), device_depth + 4 + heavy_device])
+                translate([safe_cage_horizontal_offset, (device_height / 2) + 8.25 + heavy_device + (heavy_device / 2) + safe_cage_vertical_offset, device_depth + 4 + heavy_device])
                     rotate([90, 0, 0])
                         four_rounded_corner_plate(11.5, 40, 4 + heavy_device, 5);
                 
                 // ... And punch a screw hole into the tab.
-                translate([safe_cage_offset + 10, (device_height / 2) + 4 + heavy_device + (heavy_device / 2), device_depth + 4 + heavy_device])
+                translate([safe_cage_horizontal_offset + 10, (device_height / 2) + 4 + heavy_device + (heavy_device / 2) + safe_cage_vertical_offset, device_depth + 4 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=screw_clearance_hole, h=16, $fn=this_fn, center=true);
             }
 
             difference()
             {
-                translate([safe_cage_offset, 0-((device_height / 2) + 8.25 + heavy_device + (heavy_device / 2)) + (4 + heavy_device), 10.1 + heavy_device])
+                translate([safe_cage_horizontal_offset, 0-((device_height / 2) + 8.25 + heavy_device + (heavy_device / 2)) + (4 + heavy_device) + safe_cage_vertical_offset, 10.1 + heavy_device])
                     rotate([90, 0, 0])
                         four_rounded_corner_plate(11.5, 40, 3.8 + heavy_device, 5);
 
-                translate([safe_cage_offset + 10, 0-((device_height / 2) + heavy_device + (heavy_device / 2)) - 6, 10 + heavy_device])
+                translate([safe_cage_horizontal_offset + 10, 0-((device_height / 2) + heavy_device + (heavy_device / 2)) - 6 + safe_cage_vertical_offset, 10 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=screw_clearance_hole, h=16, $fn=this_fn, center=true);
             }
@@ -829,7 +799,7 @@ module make_half_cage()
     // doing the above again, but rotating the full cage before splitting
     // it.
     rotate([0, 0, 180])
-        translate([-safe_cage_offset + (rack_cage_width * 25.4) / 4 - 10, (units_required * 44.45) / 2 + 5, 0])
+        translate([-safe_cage_horizontal_offset + (rack_cage_width * 25.4) / 4 - 10, (units_required * 44.45) / 2 + 5, 0])
             union()
             {
                 difference()
@@ -839,47 +809,47 @@ module make_half_cage()
                         do_the_thing();       
                     
                     // Then cut the cage in half...
-                    translate([-safe_cage_offset + (rack_cage_width * 25.4) / 2 - 0.001, -0.001, total_depth_required / 2 - 1])
+                    translate([-safe_cage_horizontal_offset + (rack_cage_width * 25.4) / 2 - 0.001, -0.001, total_depth_required / 2 - 1])
                         cube([rack_cage_width * 25.4 + 0.01, (units_required + 1) * 44.45, total_depth_required], center=true);
                     
                     // Then cut grooves for the tabs that attach the halves to each other...
-                    translate([-safe_cage_offset, 0-((device_height / 2) + 8 + heavy_device + (heavy_device / 2)) + (4 + heavy_device), device_depth + 4 + heavy_device,])
+                    translate([-safe_cage_horizontal_offset, 0-((device_height / 2) + 8 + heavy_device + (heavy_device / 2)) + (4 + heavy_device) - safe_cage_vertical_offset, device_depth + 4 + heavy_device,])
                         rotate([90, 0, 0])
                                 four_rounded_corner_plate(12, 40, 4 + heavy_device, 5);
                             
-                    translate([-safe_cage_offset, (device_height / 2) + 8.05 + heavy_device + (heavy_device / 2), 10 + heavy_device])
+                    translate([-safe_cage_horizontal_offset, (device_height / 2) + 8.05 + heavy_device + (heavy_device / 2) - safe_cage_vertical_offset, 10 + heavy_device])
                         rotate([90, 0, 0])
                             four_rounded_corner_plate(12, 40, 4.1 + heavy_device, 5);
                     
                     // Then, punch holes for tapping or heat-set inserts...
-                    translate([-safe_cage_offset-10, 0-((device_height / 2) + heavy_device + (heavy_device / 2)), device_depth + 4 + heavy_device])
+                    translate([-safe_cage_horizontal_offset-10, 0-((device_height / 2) + heavy_device + (heavy_device / 2)) - safe_cage_vertical_offset, device_depth + 4 + heavy_device])
                         rotate([90, 0, 0])
                             cylinder(d=tap_or_heat_set_holes, h=16, $fn=this_fn, center=true);
 
-                    translate([-safe_cage_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) - 2, 10 + heavy_device])
+                    translate([-safe_cage_horizontal_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) - 2 - safe_cage_vertical_offset, 10 + heavy_device])
                         rotate([90, 0, 0])
                             cylinder(d=tap_or_heat_set_holes, h=16, $fn=this_fn, center=true);
 
-                    translate([-safe_cage_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) + 14 - heavy_device, 10 + heavy_device])
+                    translate([-safe_cage_horizontal_offset-10, (device_height / 2) + heavy_device + (heavy_device / 2) + 14 - heavy_device + safe_cage_vertical_offset, 10 + heavy_device])
                         rotate([90, 0, 0])
                             cylinder(d=screw_clearance_hole * 2, h=16, $fn=this_fn, center=true);
                             
                     // Optionally, add alignment pin holes if the option is enabled.
                     if (add_alignment_pin_holes)
                     {
-                            alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), 2 + (heavy_device / 2));
-                            alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), 15);
-                            alignment_pin_hole(-safe_cage_offset-2.5, ((units_required * 44.45) / 2) - 2.5, 2 + (heavy_device / 2));
-                        
-                            alignment_pin_hole(-safe_cage_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)), 2 + (heavy_device / 2));
-                            alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), 15);
-                            alignment_pin_hole(-safe_cage_offset-2.5, 0-(((units_required * 44.45) / 2) - 2.5), 2 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, 2 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, 15);
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, ((units_required * 44.45) / 2) - 2.5, 2 + (heavy_device / 2));
+                    
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, -((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, 2 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, 15);
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-(((units_required * 44.45) / 2) - 2.5), 2 + (heavy_device / 2));
 
-                            alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), device_depth - 1 + (heavy_device / 2));
-                            alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), device_depth + 9 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, device_depth - 1 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, device_depth + 9 + (heavy_device / 2));
 
-                            alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), device_depth - 1 + (heavy_device / 2));
-                            alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), device_depth + 9 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, device_depth - 1 + (heavy_device / 2));
+                        alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, device_depth + 9 + (heavy_device / 2));
   
                     // If the "extra support" option is enabled, add some more
                     // alignment pins based on the height of the device.
@@ -887,15 +857,15 @@ module make_half_cage()
                     {
                         if (device_depth > 50)
                         {
-                                alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), (device_depth / 2) + 2 + (heavy_device / 2));                      
-                                alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), (device_depth / 2) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, (device_depth / 2) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, (device_depth / 2) + 2 + (heavy_device / 2));                      
                         }
                         if (device_depth > 100)
                         {
-                                alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), (device_depth / 4) + 2 + (heavy_device / 2));                      
-                                alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), (device_depth / 4) + 2 + (heavy_device / 2));                      
-                                alignment_pin_hole(-safe_cage_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2), (device_depth * 0.75) + 2 + (heavy_device / 2));                      
-                                alignment_pin_hole(-safe_cage_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)), (device_depth * 0.75) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, (device_depth / 4) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, (device_depth / 4) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, (device_height / 2) + 2.5 + (heavy_device / 2) - safe_cage_vertical_offset, (device_depth * 0.75) + 2 + (heavy_device / 2));                      
+                            alignment_pin_hole(-safe_cage_horizontal_offset-2.5, 0-((device_height / 2) + 2.5 + (heavy_device / 2)) - safe_cage_vertical_offset, (device_depth * 0.75) + 2 + (heavy_device / 2));                      
                         }
                     }
                 }
@@ -904,23 +874,23 @@ module make_half_cage()
             // Then add tabs for attaching the halves to each other.
             difference()
             {
-                translate([-safe_cage_offset, (device_height / 2) + 8.25 + heavy_device + (heavy_device / 2), device_depth + 4 + heavy_device])
+                translate([-safe_cage_horizontal_offset, (device_height / 2) + 8.25 + heavy_device + (heavy_device / 2) - safe_cage_vertical_offset, device_depth + 4 + heavy_device])
                     rotate([90, 0, 0])
                         four_rounded_corner_plate(11.5, 40, 4 + heavy_device, 5);
                 
                 // ... And punch a screw hole into the tab.
-                translate([-safe_cage_offset + 10, (device_height / 2) + 4 + heavy_device + (heavy_device / 2), device_depth + 4 + heavy_device])
+                translate([-safe_cage_horizontal_offset + 10, (device_height / 2) + 4 + heavy_device + (heavy_device / 2) - safe_cage_vertical_offset, device_depth + 4 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=screw_clearance_hole, h=16, $fn=this_fn, center=true);
             }
 
             difference()
             {
-                translate([-safe_cage_offset, 0-((device_height / 2) + 8.1 + heavy_device + (heavy_device / 2)) + (4 + heavy_device), 10.1 + heavy_device])
+                translate([-safe_cage_horizontal_offset, 0-((device_height / 2) + 8.1 + heavy_device + (heavy_device / 2)) + (4 + heavy_device) - safe_cage_vertical_offset, 10.1 + heavy_device])
                     rotate([90, 0, 0])
                         four_rounded_corner_plate(11.8, 40, 3.8 + heavy_device, 5);
 
-                translate([-safe_cage_offset + 10, 0-((device_height / 2) + heavy_device + (heavy_device / 2)) - 6, 10 + heavy_device])
+                translate([-safe_cage_horizontal_offset + 10, 0-((device_height / 2) + heavy_device + (heavy_device / 2)) - 6 - safe_cage_vertical_offset, 10 + heavy_device])
                     rotate([90, 0, 0])
                         cylinder(d=screw_clearance_hole, h=16, $fn=this_fn, center=true);
             }
@@ -953,7 +923,7 @@ module make_half_cage()
                     text(str(show_build_outline, "mm BUILD VOLUME"), halign="center", valign="center", size=5);   
         translate([0, 0 - (show_build_outline / 2) -10, 0])
                 color("white")
-                    four_rounded_corner_plate(10, 90, 1, 5);
+                    four_rounded_corner_plate(10, 90, 1, 2.5);
     }
 }
 
@@ -1022,53 +992,52 @@ module do_the_thing()
 
     // Change the faceplate ear(s) setting to accurately reflect the new size
     // if the device dimensions were too wide to fit the selected rack width.
-    safe_bolt_together_faceplate_ears = 
-      str((rack_cage_width_required == 5 ? "One Side":""),
-      (rack_cage_width_required == 6 ? "None":""),
-      (rack_cage_width_required == 6.33 ? "One Side":""),
-      (rack_cage_width_required == 6.33001 ? "Both Sides":""),
-      (rack_cage_width_required == 7 ? "None":""),
-      (rack_cage_width_required == 9.5 ? "One Side":""),
-      (rack_cage_width_required == 10 ? "None":""),
-      (rack_cage_width_required == 19 ? "None":""));
+    faceplate_ear_options = [
+        [5, "One Side"],
+        [6, "None"],
+        [6.33, "One Side"],
+        [6.33001, "Both Sides"],
+        [7, "None"],
+        [9.5, "One Side"],
+        [10, "None"],
+        [19, "None"],
+    ];
+    safe_bolt_together_faceplate_ears = faceplate_ear_options[search(rack_cage_width_required, faceplate_ear_options)[0]][1];
 
     
     // Establish sizes for the mod options. We'll use these later for 
-    // automatic positioning.
-    mod_one_width = 0.00 +
-      (mod_one_type == "1Keystone" ? 25:0) +
-      (mod_one_type == "2Keystone" ? 50:0) +
-      (mod_one_type == "3Keystone" ? 75:0) +
-      (mod_one_type == "30mmFan" ? 35:0) +
-      (mod_one_type == "40mmFan" ? 45:0) +
-      (mod_one_type == "60mmFan" ? 65:0) +
-      (mod_one_type == "80mmFan" ? 85:0);
-    mod_one_height = 0.00 +
-      (mod_one_type == "1Keystone" ? 30:0) +
-      (mod_one_type == "2Keystone" ? 30:0) +
-      (mod_one_type == "3Keystone" ? 30:0) +
-      (mod_one_type == "30mmFan" ? 35:0) +
-      (mod_one_type == "40mmFan" ? 45:0) +
-      (mod_one_type == "60mmFan" ? 65:0) +
-      (mod_one_type == "80mmFan" ? 85:0);
-      
-    mod_two_width = 0.00 +
-      (mod_two_type == "1Keystone" ? 25:0) +
-      (mod_two_type == "2Keystone" ? 50:0) +
-      (mod_one_type == "3Keystone" ? 75:0) +
-      (mod_two_type == "30mmFan" ? 35:0) +
-      (mod_two_type == "40mmFan" ? 45:0) +
-      (mod_two_type == "60mmFan" ? 65:0) +
-      (mod_two_type == "80mmFan" ? 85:0);
-    mod_two_height = 0.00 +
-      (mod_two_type == "1Keystone" ? 30:0) +
-      (mod_two_type == "2Keystone" ? 30:0) +
-      (mod_one_type == "3Keystone" ? 30:0) +
-      (mod_two_type == "30mmFan" ? 35:0) +
-      (mod_two_type == "40mmFan" ? 45:0) +
-      (mod_two_type == "60mmFan" ? 65:0) +
-      (mod_two_type == "80mmFan" ? 85:0);
-
+    // both sanity checking and automatic positioning.
+    mod_widths = [
+      ["None",0],
+      ["1x1Keystone", 25],
+      ["2x1Keystone", 50],
+      ["3x1Keystone", 75],
+      ["1x2Keystone", 25],
+      ["2x2Keystone", 50],
+      ["3x2Keystone", 75],
+      ["30mmFan", 35],
+      ["40mmFan", 45],
+      ["60mmFan", 65],
+      ["80mmFan", 85],
+    ];
+    mod_heights = [
+      ["None",0],
+      ["1x1Keystone", 30],
+      ["2x1Keystone", 30],
+      ["3x1Keystone", 30],
+      ["1x2Keystone", 60],
+      ["2x2Keystone", 60],
+      ["3x2Keystone", 60],
+      ["30mmFan", 35],
+      ["40mmFan", 45],
+      ["60mmFan", 65],
+      ["80mmFan", 85],
+    ];
+    mod_one_width = mod_widths[search([mod_one_type], mod_widths)[0]][1];
+    mod_one_height = mod_heights[search([mod_one_type], mod_heights)[0]][1];
+    mod_two_width = mod_widths[search([mod_two_type], mod_widths)[0]][1];
+    mod_two_height = mod_heights[search([mod_two_type], mod_heights)[0]][1];
+    
 
     // How wide is our working space? We have to reserve 15.875mm (5/8") for each rack
     // side, and 12mm for bolt-together ears for half- and third-width cages.
@@ -1076,23 +1045,25 @@ module do_the_thing()
        (safe_bolt_together_faceplate_ears == "None" ? 15.875:12);
     working_width_b = 0 - ((rack_cage_width_required * 25.4) / 2 -
        (safe_bolt_together_faceplate_ears == "Both Sides" ? 12:15.875));
-        
-    // Cage offset, for shifting the cage to one side. We need to sanity check this
-    // to avoid the user pushing the cage off the side of the faceplate.  
+
+
+    // Cage horizontal offset, for shifting the cage to one side. We need to
+    // sanity check this to avoid the user pushing the cage off the side of
+    // the faceplate.  
     
     // Is the offset small enough to keep the cage inside the safe working area of the 
     // faceplate? If not, we should probably warn about it.
-    outer_edge = total_width_required / 2;
+    outer_horizontal_edge = total_width_required / 2;
     if (
-         ((cage_offset > 0) && (outer_edge + cage_offset > working_width_a))
+         ((cage_horizontal_offset > 0) && (outer_horizontal_edge + cage_horizontal_offset > working_width_a))
          ||
-         ((cage_offset < 0) && (0 - outer_edge + cage_offset < working_width_b))
+         ((cage_horizontal_offset < 0) && (0 - outer_horizontal_edge + cage_horizontal_offset < working_width_b))
        )
     {
         echo();
         echo();
         echo(" * * * WARNING! * * *");
-        echo(" Cage offset exceeds safe distance, and would likely interfere with mounting in the rack.");
+        echo(" Cage HORIZONTAL offset exceeds safe distance, and would likely interfere with mounting in the rack.");
         echo(" Offset has been forced to zero. Double-check your offset settings.");
         echo();
         echo();
@@ -1101,12 +1072,42 @@ module do_the_thing()
     }
     
     // When the offset sanity check fails, force the offset to zero.
-    safe_cage_offset = 0.00 + 
+    safe_cage_horizontal_offset = 0.00 + 
       ((
-        ((cage_offset >= 0) && (outer_edge + cage_offset > working_width_a))
+        ((cage_horizontal_offset >= 0) && (outer_horizontal_edge + cage_horizontal_offset > working_width_a))
         ||
-        ((cage_offset < 0) && (0 - outer_edge + cage_offset < working_width_b))
-      ) ? 0.00:cage_offset);
+        ((cage_horizontal_offset < 0) && (0 - outer_horizontal_edge + cage_horizontal_offset < working_width_b))
+      ) ? 0.00:cage_horizontal_offset);
+
+
+    // Cage vertical offset, for shifting the cage upor down. We need to
+    // sanity check this to avoid the user pushing the cage off the edge of
+    // the faceplate.  
+    outer_vertical_edge = (units_required * 44.45) / 2;
+    if (
+         ((cage_vertical_offset >= 0) && ((total_height_required / 2) + cage_vertical_offset > outer_vertical_edge))
+         ||
+         ((cage_vertical_offset < 0) && (0 - (total_height_required / 2) + cage_vertical_offset < 0 - outer_vertical_edge))
+       )
+    {
+        echo();
+        echo();
+        echo(" * * * WARNING! * * *");
+        echo(" Cage VERTICAL offset exceeds safe distance, and would likely interfere with mounting in the rack.");
+        echo(" Offset has been forced to zero. Double-check your offset settings.");
+        echo();
+        echo();
+        
+        check_console();
+    }
+    
+    // When the offset sanity check fails, force the offset to zero.
+    safe_cage_vertical_offset = 0.00 + 
+      ((
+        ((cage_vertical_offset >= 0) && ((total_height_required / 2) + cage_vertical_offset > outer_vertical_edge))
+        ||
+        ((cage_vertical_offset < 0) && (0 - (total_height_required / 2) + cage_vertical_offset < 0 - outer_vertical_edge))
+      ) ? 0.00:cage_vertical_offset);
 
 
     // Mod slot sanity checking, to make sure faceplate modifications will
@@ -1114,8 +1115,8 @@ module do_the_thing()
     
     // Determine the open (slack) space on either side of the cage - this will
     // be used to find a default location for modifications, if there's room.
-    slack_space_a = working_width_a - outer_edge - safe_cage_offset;
-    slack_space_b = working_width_b + outer_edge - safe_cage_offset;
+    slack_space_a = working_width_a - outer_horizontal_edge - safe_cage_horizontal_offset;
+    slack_space_b = working_width_b + outer_horizontal_edge - safe_cage_horizontal_offset;
 
     // Create a "safe" offset value for the modification, if possible. This is
     // basically a way to sidestep the inability to change the value of a
@@ -1130,18 +1131,18 @@ module do_the_thing()
         &&
         (slack_space_a >= abs(slack_space_b))
         &&
-        (outer_edge + safe_cage_offset + (slack_space_a / 2) + (mod_one_width / 2) < working_width_a)
-      ) ? outer_edge + safe_cage_offset + (slack_space_a / 2):0.00)
+        (outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_a / 2) + (mod_one_width / 2) < working_width_a)
+      ) ? round(outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_a / 2)):0.00)
       +
       ((
         (mod_one_offset == 0.00) 
         &&
-        (slack_space_a < abs(slack_space_b))
-        &&
         (abs(slack_space_b) > mod_one_width)
         &&
-        (0 - outer_edge + safe_cage_offset + (slack_space_b / 2) - (mod_one_width / 2) > working_width_b)
-      ) ? (0 - outer_edge + safe_cage_offset + (slack_space_b / 2)):0.00)
+        (slack_space_a < abs(slack_space_b))
+        &&
+        (0 - outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_b / 2) - (mod_one_width / 2) > working_width_b)
+      ) ? round(0 - outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_b / 2)):0.00)
       
       // Check to see if the mod's edge clips the cage or overruns the
       // edge of the working area of the faceplate.
@@ -1151,9 +1152,9 @@ module do_the_thing()
          ||
          ((mod_one_offset < 0) && (mod_one_offset - (mod_one_width / 2) < working_width_b))
          ||
-         ((mod_one_offset > 0) && (mod_one_offset - (mod_one_width / 2) < outer_edge + safe_cage_offset))
+         ((mod_one_offset > 0) && (mod_one_offset - (mod_one_width / 2) < outer_horizontal_edge + safe_cage_horizontal_offset))
          ||
-         ((mod_one_offset < 0) && (mod_one_offset + (mod_one_width / 2) > 0 - outer_edge + safe_cage_offset))
+         ((mod_one_offset < 0) && (mod_one_offset + (mod_one_width / 2) > 0 - outer_horizontal_edge + safe_cage_horizontal_offset))
        ) ? 0.00:mod_one_offset); 
     
     // If we cannot set a safe offset for the modification, or it's too tall to
@@ -1188,34 +1189,34 @@ module do_the_thing()
 
     // Now we'll do it all again for mod two.
     safe_mod_two_offset = 0.00 +
-//      ((
-//        (mod_two_offset == 0.00) 
-//        &&
-//        (slack_space_a > mod_two_width)
-//        &&
-//        (slack_space_a >= abs(slack_space_b))
-//        &&
-//        (outer_edge + safe_cage_offset + (slack_space_a / 2) + (mod_two_width / 2) < working_width_a)
-//      ) ? outer_edge + safe_cage_offset + (slack_space_a / 2):0.00)
-//      +
-//      ((
-//        (mod_two_offset == 0.00) 
-//        &&
-//        (slack_space_a < abs(slack_space_b))
-//        &&
-//        (abs(slack_space_b) > mod_two_width)
-//        &&
-//        (0 - outer_edge + safe_cage_offset + (slack_space_b / 2) - (mod_two_width / 2) > working_width_b)
-//      ) ? (0 - outer_edge + safe_cage_offset + (slack_space_b / 2)):0.00)
-//      +
+      ((
+        (mod_two_offset == 0.00) 
+        &&
+        (slack_space_a <= abs(slack_space_b))
+        &&
+        (abs(slack_space_b) > mod_two_width)
+        &&
+        (0 - outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_b / 2) - (mod_two_width / 2) > working_width_b)
+      ) ? round(0 - outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_b / 2)):0.00)
+      +
+      ((
+        (mod_two_offset == 0.00) 
+        &&
+        (slack_space_a > abs(slack_space_b))
+        &&
+        (slack_space_a > mod_two_width)
+        &&
+        (outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_a / 2) + (mod_two_width / 2) < working_width_a)
+      ) ? round(outer_horizontal_edge + safe_cage_horizontal_offset + (slack_space_a / 2)):0.00)
+      +
       ((
          ((mod_two_offset > 0) && (mod_two_offset + (mod_two_width / 2) > working_width_a))
          ||
          ((mod_two_offset < 0) && (mod_two_offset - (mod_two_width / 2) < working_width_b))
          ||
-         ((mod_two_offset > 0) && (mod_two_offset - (mod_two_width / 2) < outer_edge + safe_cage_offset))
+         ((mod_two_offset > 0) && (mod_two_offset - (mod_two_width / 2) < outer_horizontal_edge + safe_cage_horizontal_offset))
          ||
-         ((mod_two_offset < 0) && (mod_two_offset + (mod_two_width / 2) > 0 - outer_edge + safe_cage_offset))
+         ((mod_two_offset < 0) && (mod_two_offset + (mod_two_width / 2) > 0 - outer_horizontal_edge + safe_cage_horizontal_offset))
        ) ? 0.00:mod_two_offset); 
 
     // If we cannot set a safe offset for the modification, or it's too tall to
@@ -1300,10 +1301,10 @@ module do_the_thing()
                                         text(str(i), halign="center", valign="center", size=5);
                             translate([i / ((rack_cage_width_required * 25.4) / 2),  units_required * (44.45) / 2 + 9, -1 + heavy_device])
                                     color("white")
-                                        four_rounded_corner_plate(10, 16, 1, 5);
+                                        four_rounded_corner_plate(10, 16, 1, 2.5);
                             translate([i / ((rack_cage_width_required * 25.4) / 2), 0 - units_required * (44.45) / 2 - 9, -1 + heavy_device])
                                     color("white")
-                                        four_rounded_corner_plate(10, 16, 1, 5);
+                                        four_rounded_corner_plate(10, 16, 1, 2.5);
                         }
                     }
                 }
@@ -1326,18 +1327,18 @@ module do_the_thing()
                             four_rounded_corner_plate(18, 56, 1, 5);
 
                 // Show a marker to indicate where the cage is centered.
-                translate([safe_cage_offset, 0, (device_depth + 20) / 2 - 5])
+                translate([safe_cage_horizontal_offset, 0, (device_depth + 20) / 2 - 5])
                     color("blue")
                         cube([0.5, units_required * 44.45 + 10, (device_depth + 20) + 10], center=true);
-                translate([safe_cage_offset, 0 - (units_required * 44.45) / 2 - 13, 20])
+                translate([safe_cage_horizontal_offset, 0 - (units_required * 44.45) / 2 - 13, 20])
                     color("blue")
                         linear_extrude(height=1, center=true)
-                            text(str(safe_cage_offset), halign="center", valign="center", size=5);   
-                translate([safe_cage_offset, 0 - (units_required * 44.45) / 2 - 20, 20])
+                            text(str(safe_cage_horizontal_offset), halign="center", valign="center", size=5);   
+                translate([safe_cage_horizontal_offset, 0 - (units_required * 44.45) / 2 - 20, 20])
                     color("blue")
                         linear_extrude(height=1, center=true)
                             text("CAGE CENTER", halign="center", valign="center", size=5);   
-                translate([safe_cage_offset, 0 - (units_required * 44.45) / 2 - 17, 19])
+                translate([safe_cage_horizontal_offset, 0 - (units_required * 44.45) / 2 - 17, 19])
                         color("white")
                             four_rounded_corner_plate(18, 54, 1, 5);
 
@@ -1364,17 +1365,17 @@ module do_the_thing()
                                 text(str(show_build_outline, "mm BUILD VOLUME"), halign="center", valign="center", size=5);   
                     translate([0, 0 - (show_build_outline / 2) - 10, 0])
                             color("white")
-                                four_rounded_corner_plate(10, 90, 1, 5);
+                                four_rounded_corner_plate(10, 90, 1, 2.5);
             }
             
             
             // Create a reinforcing block behind the faceplate centered on where we
             // will cut out the opening for the device.
-            translate([safe_cage_offset, 0, 7.5 + (heavy_device ? 2:0)])
+            translate([safe_cage_horizontal_offset, safe_cage_vertical_offset, 7.5 + (heavy_device ? 2:0)])
                 cube([total_width_required, total_height_required, 10], center=true);
 
             // Create two side plates and carve most of them out for ventillation
-            translate([safe_cage_offset-((device_width + device_clearance) / 2) - 4 - heavy_device - 0.001, 0, ((device_depth + device_clearance) / 2) + 11 + (heavy_device ? 2:0) - (device_clearance / 2)])
+            translate([safe_cage_horizontal_offset-((device_width + device_clearance) / 2) - 4 - heavy_device - 0.001, safe_cage_vertical_offset, ((device_depth + device_clearance) / 2) + 11 + (heavy_device ? 2:0) - (device_clearance / 2)])
                 rotate([90, 90, 90])
                     difference()
                     {
@@ -1385,9 +1386,9 @@ module do_the_thing()
                         {
                             translate([4, 0, -1])
                                 four_rounded_corner_plate(device_height - 8, device_depth - 16 - cutout_edge, 6 + (heavy_device ? 2:0), cutout_radius);    
-                        }                
+                        }
                     }        
-            translate([safe_cage_offset + ((device_width + device_clearance) / 2) + 0.001, 0, ((device_depth + device_clearance) / 2) + 11 + heavy_device - (device_clearance / 2)])
+            translate([safe_cage_horizontal_offset + ((device_width + device_clearance) / 2) + 0.001, safe_cage_vertical_offset, ((device_depth + device_clearance) / 2) + 11 + heavy_device - (device_clearance / 2)])
                 rotate([90, 90, 90])
                     difference()
                     {
@@ -1400,7 +1401,7 @@ module do_the_thing()
                     }
                     
             // Create two top/bottom plates and carve most of them out for ventillation
-            translate([safe_cage_offset, (device_height + device_clearance) / 2 + 0.001, ((device_depth + device_clearance) / 2) + 11 + heavy_device - (device_clearance / 2)])
+            translate([safe_cage_horizontal_offset, (device_height + device_clearance) / 2 + 0.001 + safe_cage_vertical_offset, ((device_depth + device_clearance) / 2) + 11 + heavy_device - (device_clearance / 2)])
                 rotate([0, 90, 90])
                     difference()
                     {
@@ -1410,13 +1411,12 @@ module do_the_thing()
                             if (!extra_support)
                             {
                                 translate([4, 0, -1])
-                                    four_rounded_corner_plate(device_width - 8, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);      
+                                    four_rounded_corner_plate(device_width - 8, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);    
                             } else {
                                 translate([4, (device_width - 8) / 4 + 8, -1])
                                     four_rounded_corner_plate((device_width - 8) / 2 - 16, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);      
                                 translate([4, -(device_width - 8) / 4 - 8, -1])
                                     four_rounded_corner_plate((device_width - 8) / 2 - 16, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);      
-
                             }
                         }
                     }
@@ -1426,26 +1426,26 @@ module do_the_thing()
             {
                 difference()
                 {
-                    translate([safe_cage_offset - 2 - heavy_device - 10, 0, ((device_depth + device_clearance) / 2) + 11 + (heavy_device ? 2:0) - (device_clearance / 2) - (split_cage_into_two_halves ? 8 : 0)])
+                    translate([safe_cage_horizontal_offset - 2 - heavy_device - 10, safe_cage_vertical_offset, ((device_depth + device_clearance) / 2) + 11 + (heavy_device ? 2:0) - (device_clearance / 2) - (split_cage_into_two_halves ? 8 : 0)])
                         rotate([90, 90, 90])
                             two_rounded_corner_plate(total_height_required, device_depth + device_clearance - (split_cage_into_two_halves ? 12 : 0), 4 + (heavy_device ? 2:0), support_radius);
 
-                    translate([safe_cage_offset, 0, (device_depth / 2)])
+                    translate([safe_cage_horizontal_offset, safe_cage_vertical_offset, (device_depth / 2)])
                         cube([device_width + device_clearance + 1, device_height + device_clearance + 1, device_depth + device_clearance + 50], center=true);
                 }
 
                 difference()
                 {
-                    translate([safe_cage_offset - 2 - heavy_device + 10, 0, ((device_depth + device_clearance) / 2) + 11 + (heavy_device ? 2:0) - (device_clearance / 2) - (split_cage_into_two_halves ? 8 : 0)])
+                    translate([safe_cage_horizontal_offset - 2 - heavy_device + 10, safe_cage_vertical_offset, ((device_depth + device_clearance) / 2) + 11 + (heavy_device ? 2:0) - (device_clearance / 2) - (split_cage_into_two_halves ? 8 : 0)])
                         rotate([90, 90, 90])
                             two_rounded_corner_plate(total_height_required, device_depth + device_clearance - (split_cage_into_two_halves ? 12 : 0), 4 + (heavy_device ? 2:0), support_radius);
 
-                    translate([safe_cage_offset, 0, (device_depth / 2)])
+                    translate([safe_cage_horizontal_offset, safe_cage_vertical_offset, (device_depth / 2)])
                         cube([device_width + device_clearance + 1, device_height + device_clearance + 1, device_depth + device_clearance + 50], center=true);
                 }
             }
                     
-            translate([safe_cage_offset, 0-((device_height + device_clearance) / 2) - 4 - heavy_device - 0.001, ((device_depth + device_clearance) / 2) + 11 + heavy_device - (device_clearance / 2)])
+            translate([safe_cage_horizontal_offset, 0-((device_height + device_clearance) / 2) - 4 - heavy_device - 0.001 + safe_cage_vertical_offset, ((device_depth + device_clearance) / 2) + 11 + heavy_device - (device_clearance / 2)])
                 rotate([0, 90, 90])
                     difference()
                     {
@@ -1459,15 +1459,15 @@ module do_the_thing()
                                     four_rounded_corner_plate(device_width - 8, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);      
                             } else {
                                 translate([4, (device_width - 8) / 4 + 8, -1])
-                                    four_rounded_corner_plate((device_width - 8) / 2 - 16, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);      
+                                    four_rounded_corner_plate((device_width - 8) / 2 - 16, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);  
                                 translate([4, -(device_width - 8) / 4 - 8, -1])
-                                    four_rounded_corner_plate((device_width - 8) / 2 - 16, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);      
+                                    four_rounded_corner_plate((device_width - 8) / 2 - 16, device_depth - 16 - cutout_edge, 6 + heavy_device, cutout_radius);     
                             }    
                         }        
                     }
             
             // Create a back plate and carve most of it out for ventillation
-            translate([safe_cage_offset, 0, 2 + device_depth + device_clearance + heavy_device])
+            translate([safe_cage_horizontal_offset, safe_cage_vertical_offset, 2 + device_depth + device_clearance + heavy_device])
                 difference()
                 {
                     cube([device_width + 2, device_height + 2, 4 + heavy_device], center=true);                    
@@ -1482,13 +1482,13 @@ module do_the_thing()
             if (safe_mod_one_type != "None")
                 mod_offset_marker(safe_mod_one_offset, 10, units_required);
             // Single Keystone
-            if (safe_mod_one_type == "1Keystone")
+            if (safe_mod_one_type == "1x1Keystone")
             {
                 translate([safe_mod_one_offset, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
             }
             // Dual Keystone
-            if (safe_mod_one_type == "2Keystone")
+            if (safe_mod_one_type == "2x1Keystone")
             {
                 translate([safe_mod_one_offset - 11.5, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
@@ -1496,13 +1496,52 @@ module do_the_thing()
                     cube([19, 27, 11], center=true);
             }
             // Triple Keystone
-            if (safe_mod_one_type == "3Keystone")
+            if (safe_mod_one_type == "3x1Keystone")
             {
                 translate([safe_mod_one_offset - 23, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
                 translate([safe_mod_one_offset, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
                 translate([safe_mod_one_offset + 23, 2.5, 5.5])
+                    cube([19, 27, 11], center=true);
+            }
+            // 1x2 Keystone
+            if (safe_mod_one_type == "1x2Keystone")
+            {
+                translate([safe_mod_one_offset, 2.5 - 12.375,, 5.5])
+                    cube([19, 27, 11], center=true);
+                
+                translate([safe_mod_one_offset, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+            }
+            // 2x2 Keystone
+            if (safe_mod_one_type == "2x2Keystone")
+            {
+                translate([safe_mod_one_offset - 11.5, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_one_offset + 11.5, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                
+                translate([safe_mod_one_offset - 11.5, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_one_offset + 11.5, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+            }
+            // 3x2 Keystone
+            if (safe_mod_one_type == "3x2Keystone")
+            {
+                translate([safe_mod_one_offset - 23, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_one_offset, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_one_offset + 23, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                
+                translate([safe_mod_one_offset - 23, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_one_offset, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_one_offset + 23, 2.5 + 12.375, 5.5])
                     cube([19, 27, 11], center=true);
             }
             // 30mm fan
@@ -1535,13 +1574,13 @@ module do_the_thing()
             if (safe_mod_two_type != "None")
                 mod_offset_marker(safe_mod_two_offset, 10, units_required);
             // Single Keystone
-            if (safe_mod_two_type == "1Keystone")
+            if (safe_mod_two_type == "1x1Keystone")
             {
                 translate([safe_mod_two_offset, 2.5, 5.5])
                         cube([19, 27, 11], center=true);
             }
             // Dual Keystone
-            if (safe_mod_two_type == "2Keystone")
+            if (safe_mod_two_type == "2x1Keystone")
             {
                 translate([safe_mod_two_offset - 11.5, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
@@ -1549,13 +1588,52 @@ module do_the_thing()
                     cube([19, 27, 11], center=true);
             }
             // Triple Keystone
-            if (safe_mod_two_type == "3Keystone")
+            if (safe_mod_two_type == "3x1Keystone")
             {
                 translate([safe_mod_two_offset - 23, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
                 translate([safe_mod_two_offset, 2.5, 5.5])
                     cube([19, 27, 11], center=true);
                 translate([safe_mod_two_offset + 23, 2.5, 5.5])
+                    cube([19, 27, 11], center=true);
+            }
+            // 1x2 Keystone
+            if (safe_mod_two_type == "1x2Keystone")
+            {
+                translate([safe_mod_two_offset, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                
+                translate([safe_mod_two_offset, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+            }
+            // 2x2 Keystone
+            if (safe_mod_two_type == "2x2Keystone")
+            {
+                translate([safe_mod_two_offset - 11.5, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_two_offset + 11.5, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                
+                translate([safe_mod_two_offset - 11.5, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_two_offset + 11.5, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+            }
+            // 3x2 Keystone
+            if (safe_mod_two_type == "3x2Keystone")
+            {
+                translate([safe_mod_two_offset - 23, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_two_offset, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_two_offset + 23, 2.5 - 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                
+                translate([safe_mod_two_offset - 23, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_two_offset, 2.5 + 12.375, 5.5])
+                    cube([19, 27, 11], center=true);
+                translate([safe_mod_two_offset + 23, 2.5 + 12.375, 5.5])
                     cube([19, 27, 11], center=true);
             }
             // 30mm fan
@@ -1585,14 +1663,14 @@ module do_the_thing()
         }
                     
         // Carve out the device area
-        translate([safe_cage_offset, 0, (device_depth + device_clearance) / 2 - 1])
+        translate([safe_cage_horizontal_offset, safe_cage_vertical_offset, (device_depth + device_clearance) / 2 - 1])
             cube([device_width + device_clearance, device_height + device_clearance, device_depth + device_clearance], center=true);
 
                 
-        // Additional faceplate modifications - subtractions\
+        // Additional faceplate modifications - subtractions
         // Mod slot ONE
         // Single Keystone
-        if (safe_mod_one_type == "1Keystone")
+        if (safe_mod_one_type == "1x1Keystone")
         {
             translate([safe_mod_one_offset, 1.5, 0])
                 rotate ([0, 0, 90])
@@ -1600,7 +1678,7 @@ module do_the_thing()
                         keystone_Module();
         }
         // Dual Keystone
-        if (safe_mod_one_type == "2Keystone")
+        if (safe_mod_one_type == "2x1Keystone")
         {
             translate([safe_mod_one_offset - 11.5, 1.5, 0])
                 rotate ([0, 0, 90])
@@ -1612,7 +1690,7 @@ module do_the_thing()
                         keystone_Module();
         }
         // Triple Keystone
-        if (safe_mod_one_type == "3Keystone")
+        if (safe_mod_one_type == "3x1Keystone")
         {
             translate([safe_mod_one_offset - 23, 1.5, 0])
                 rotate ([0, 0, 90])
@@ -1623,6 +1701,69 @@ module do_the_thing()
                     translate([-13.5, -9.5, 0])
                         keystone_Module();
             translate([safe_mod_one_offset + 23, 1.5, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+        }
+        // 1x2 Keystone
+        if (safe_mod_one_type == "1x2Keystone")
+        {
+            translate([safe_mod_one_offset, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            
+            translate([safe_mod_one_offset, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+        }
+        // 2x2 Keystone
+        if (safe_mod_one_type == "2x2Keystone")
+        {
+            translate([safe_mod_one_offset - 11.5, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_one_offset + 11.5, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            
+            translate([safe_mod_one_offset - 11.5, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_one_offset + 11.5, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+        }
+        // 3x2 Keystone
+        if (safe_mod_one_type == "3x2Keystone")
+        {
+            translate([safe_mod_one_offset - 23, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_one_offset, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_one_offset + 23, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            
+            translate([safe_mod_one_offset - 23, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_one_offset, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_one_offset + 23, 1.5 + 12.375, 0])
                 rotate ([0, 0, 90])
                     translate([-13.5, -9.5, 0])
                         keystone_Module();
@@ -1666,7 +1807,7 @@ module do_the_thing()
 
         // Mod slot TWO
         // Single Keystone
-        if (safe_mod_two_type == "1Keystone")
+        if (safe_mod_two_type == "1x1Keystone")
         {
             translate([safe_mod_two_offset, 1.5, 0])
                 rotate ([0, 0, 90])
@@ -1674,7 +1815,7 @@ module do_the_thing()
                         keystone_Module();
         }
         // Dual Keystone
-        if (safe_mod_two_type == "2Keystone")
+        if (safe_mod_two_type == "2x1Keystone")
         {
             translate([safe_mod_two_offset - 11.5, 1.5, 0])
                 rotate ([0, 0, 90])
@@ -1686,7 +1827,7 @@ module do_the_thing()
                         keystone_Module();
         }
         // Triple Keystone
-        if (safe_mod_two_type == "3Keystone")
+        if (safe_mod_two_type == "3x1Keystone")
         {
             translate([safe_mod_two_offset - 23, 1.5, 0])
                 rotate ([0, 0, 90])
@@ -1697,6 +1838,69 @@ module do_the_thing()
                     translate([-13.5, -9.5, 0])
                         keystone_Module();
             translate([safe_mod_two_offset + 23, 1.5, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+        }
+        // 1x2 Keystone
+        if (safe_mod_two_type == "1x2Keystone")
+        {
+            translate([safe_mod_two_offset, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            
+            translate([safe_mod_two_offset, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+        }
+        // 2x2 Keystone
+        if (safe_mod_two_type == "2x2Keystone")
+        {
+            translate([safe_mod_two_offset - 11.5, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_two_offset + 11.5, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            
+            translate([safe_mod_two_offset - 11.5, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_two_offset + 11.5, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+        }
+        // 3x2 Keystone
+        if (safe_mod_two_type == "3x2Keystone")
+        {
+            translate([safe_mod_two_offset - 23, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_two_offset, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_two_offset + 23, 1.5 - 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            
+            translate([safe_mod_two_offset - 23, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_two_offset, 1.5 + 12.375, 0])
+                rotate ([0, 0, 90])
+                    translate([-13.5, -9.5, 0])
+                        keystone_Module();
+            translate([safe_mod_two_offset + 23, 1.5 + 12.375, 0])
                 rotate ([0, 0, 90])
                     translate([-13.5, -9.5, 0])
                         keystone_Module();
@@ -1755,4 +1959,3 @@ if (split_cage_into_two_halves)
 
 
 /* END! */
-
